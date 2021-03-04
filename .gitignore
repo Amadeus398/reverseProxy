@@ -1,0 +1,10 @@
+/*.iml
+/.idea
+/*createBack.http
+/*createCred.http
+/*createSite.http
+/*delCred.http
+/*delSite.http
+/*getCred.http
+/*getSite.http
+/*updateCred.http
