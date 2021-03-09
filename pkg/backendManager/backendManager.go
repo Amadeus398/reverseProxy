@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	"reverseProxy/pkg/logging"
 	"reverseProxy/pkg/repositories/backends"
 	"sync"
 	"time"
@@ -25,6 +26,7 @@ type BackendManager struct {
 	ctx         context.Context
 	mux         sync.RWMutex
 	e           chan error
+	log         *logging.Logger
 }
 
 type Client struct {
@@ -35,6 +37,7 @@ type Client struct {
 	mux       sync.RWMutex
 }
 
+// NewBackendManager returns new struct BackendManager
 func NewBackendManager(ctx context.Context) *BackendManager {
 	return &BackendManager{
 		endPoints:   make(map[string][]*Client),
@@ -45,7 +48,11 @@ func NewBackendManager(ctx context.Context) *BackendManager {
 	}
 }
 
+// syncHosts updates the current hosts and clients of endpoints
 func (b *BackendManager) syncHosts(endpoints []*backends.Backend) error {
+	b.log = logging.NewLogs("backendManager", "syncHosts")
+
+	b.log.GetInfo().Msg("updating the host data")
 	for host, val := range b.endPoints {
 		match := false
 		for _, endpoint := range endpoints {
@@ -66,6 +73,7 @@ func (b *BackendManager) syncHosts(endpoints []*backends.Backend) error {
 		}
 	}
 
+	b.log.GetInfo().Msg("updating clients by host")
 	for _, endpoint := range endpoints {
 		match := false
 		_, ok := b.endPoints[endpoint.Site.Host]
@@ -88,6 +96,7 @@ func (b *BackendManager) syncHosts(endpoints []*backends.Backend) error {
 		}
 	}
 
+	b.log.GetInfo().Msg("adding new clients by host")
 	for key, clients := range b.endPoints {
 		newClients := []*Client{}
 		for _, client := range clients {
@@ -102,6 +111,7 @@ func (b *BackendManager) syncHosts(endpoints []*backends.Backend) error {
 	return nil
 }
 
+// SyncEndpoints updates the current endpoints of database
 func (b *BackendManager) SyncEndpoints() {
 	b.mux.Lock()
 	defer b.mux.Unlock()
@@ -115,6 +125,7 @@ func (b *BackendManager) SyncEndpoints() {
 	}
 }
 
+// CheckEndpoints check Alive clients
 func (b *BackendManager) CheckEndpoints() {
 	b.mux.RLock()
 	defer b.mux.RUnlock()
@@ -126,6 +137,8 @@ func (b *BackendManager) CheckEndpoints() {
 	}
 }
 
+// ping establishes a connection with each
+// client and updates the status Alive
 func (c *Client) ping() {
 	c.mux.Lock()
 	defer c.mux.Unlock()
@@ -142,34 +155,45 @@ func (c *Client) ping() {
 	c.Alive = true
 }
 
+// getAlive block the safe reading of the
+// client's status Alive
 func (c *Client) getAlive() bool {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	return c.Alive
 }
 
+// GetClient randomly selects a client for
+// a given host
 func (b *BackendManager) GetClient(host string) (*Client, error) {
+	b.log = logging.NewLogs("backendManager", "getClient")
+
 	b.mux.RLock()
-	b.mux.RUnlock()
+	defer b.mux.RUnlock()
 
 	clients, ok := b.endPoints[host]
 	if !ok {
+		b.log.GetWarn().Msg("host not found")
 		return nil, ErrNoHost
 	}
 
 	nBig, err := rand.Int(rand.Reader, big.NewInt(int64(len(clients))))
 	if err != nil {
+		b.log.GetError().Str("when", "get random cryptographically integer").
+			Err(err).Msg("failed get integer")
 		return nil, err
 	}
 	n := nBig.Int64()
 	client := clients[n]
 	if !client.getAlive() {
+		b.log.GetWarn().Msg("client alive false")
 		i := n + 1
 		for i != n {
 			if i == int64(len(clients)) {
 				i = 0
 			}
 			if clients[i].getAlive() {
+				b.log.GetWarn().Msg("client alive true")
 				return clients[i], nil
 			}
 		}
@@ -177,9 +201,13 @@ func (b *BackendManager) GetClient(host string) (*Client, error) {
 		return client, nil
 	}
 
+	b.log.GetWarn().Msg("client not found")
 	return nil, ErrClientNotFound
 }
 
+// Serve with the ticks running SyncEndpoints
+// and CheckEndpoints during the operation of
+// the application
 func (b *BackendManager) Serve() error {
 	defer b.tickDB.Stop()
 	defer b.tickBackend.Stop()

@@ -1,41 +1,57 @@
 package authorizeManager
 
 import (
+	"reverseProxy/pkg/logging"
 	"reverseProxy/pkg/repositories/credentials"
 	"reverseProxy/pkg/repositories/sites"
 )
 
 type Authorize struct {
-	needAuth bool
-	authUser bool
+	log *logging.Logger
 }
 
+// NeedAuth determines whether authorization is
+// required on the specified host
 func (a *Authorize) NeedAuth(host string) (bool, error) {
+	a.log = logging.NewLogs("authorizeManager", "needAuth")
+
+	a.log.GetInfo().Msg("check the host in the database")
 	auth, err := sites.Authorization(host)
 	if err != nil {
+		a.log.GetError().Str("when", "check the host in the database").
+			Err(err).Msg("failed check the host in the database")
 		return false, err
 	}
 
+	var needAuth bool
 	if !auth {
-		a.needAuth = false
-		return a.needAuth, nil
+		needAuth = false
+		return needAuth, err
 	}
-	a.needAuth = true
+	needAuth = true
 
-	return a.needAuth, nil
+	return needAuth, nil
 }
 
+// AuthorizeUser verifying user data on the
+// specified host
 func (a *Authorize) AuthorizeUser(login, password, host string) (bool, error) {
+	a.log = logging.NewLogs("authorizeManager", "authorizeUser")
+
+	a.log.GetInfo().Msg("verifying user data")
 	user, err := credentials.AuthorizeUser(login, password, host)
 	if err != nil {
+		a.log.GetError().Str("when", "verifying user data").
+			Err(err).Msg("failed verified user data")
 		return false, err
 	}
 
+	var authUser bool
 	if !user {
-		a.authUser = false
-		return a.authUser, nil
+		authUser = false
+		return authUser, err
 	}
-	a.authUser = true
+	authUser = true
 
-	return a.authUser, nil
+	return authUser, nil
 }

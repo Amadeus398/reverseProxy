@@ -5,8 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/jackc/pgx/v4/stdlib"
-	"log"
 	"time"
+)
+
+var (
+	ErrNothingDone = fmt.Errorf("sql query did nothing")
+	ConnManager    = AbstractConnectionManager(&ConnectionManager{})
 )
 
 type ConnectionManager struct {
@@ -22,42 +26,47 @@ type sqlInfo struct {
 	sslmode  string
 }
 
-var (
-	ErrNothingDone = fmt.Errorf("sql query did nothing")
-	ConnManager    = ConnectionManager{}
-	connSql        = sqlInfo{
-		host:     "127.0.0.1",
-		port:     "5432",
-		user:     "amadeus",
-		password: "digger",
-		dbname:   "log",
-		sslmode:  "disable",
-	}
-)
+type DbConfig interface {
+	GetHost() string
+	GetPort() string
+	GetUser() string
+	GetPassword() string
+	GetDbname() string
+	GetSslmode() string
+}
 
-func (c *ConnectionManager) Connect() error {
+// Connect opens a connection to the PostgreSQL server
+func (c *ConnectionManager) Connect(cfg DbConfig) error {
+	connSql := sqlInfo{
+		host:     cfg.GetHost(),
+		port:     cfg.GetPort(),
+		user:     cfg.GetUser(),
+		password: cfg.GetPassword(),
+		dbname:   cfg.GetDbname(),
+		sslmode:  cfg.GetSslmode(),
+	}
 	connector := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		connSql.host, connSql.port, connSql.user, connSql.password, connSql.dbname, connSql.sslmode,
 	)
 	var err error
 	c.connection, err = sql.Open("pgx", connector)
 	if err != nil {
-		//TODO zerolog
-		log.Fatal(err)
+		return err
 	}
 	if err := c.connection.Ping(); err != nil {
-		log.Fatal(err)
+		return err
 	}
 	return nil
 }
 
+// Close closes a connection to the PostgreSQL server
 func (c *ConnectionManager) Close() {
 	if err := c.connection.Close(); err != nil {
-		// TODO zerolog
-		return
+		panic(err)
 	}
 }
 
+// Exec executes a query without returning any rows
 func (c *ConnectionManager) Exec(query string, args ...interface{}) error {
 	if err := c.connection.Ping(); err != nil {
 		return err
@@ -67,8 +76,6 @@ func (c *ConnectionManager) Exec(query string, args ...interface{}) error {
 	defer cancel()
 	result, err := c.connection.ExecContext(queryCtx, query, args...)
 	if err != nil {
-		// TODO zerolog
-		fmt.Println(err)
 		return err
 	}
 	rows, err := result.RowsAffected()
@@ -81,18 +88,20 @@ func (c *ConnectionManager) Exec(query string, args ...interface{}) error {
 	return nil
 }
 
+// QueryRow executes a query that return at most one row
 func (c *ConnectionManager) QueryRow(query string, args ...interface{}) (*sql.Row, func(), error) {
 	if err := c.connection.Ping(); err != nil {
 		return nil, nil, err
 	}
 	ctx := context.TODO()
-	queryCtx, cancel := context.WithTimeout(ctx, 50*time.Second)
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 
 	row := c.connection.QueryRowContext(queryCtx, query, args...)
 	return row, cancel, nil
 
 }
 
+// Query executes a query that returns more than one row
 func (c *ConnectionManager) Query(query string, args ...interface{}) (*sql.Rows, func(), error) {
 	if err := c.connection.Ping(); err != nil {
 		return nil, nil, err
@@ -106,4 +115,12 @@ func (c *ConnectionManager) Query(query string, args ...interface{}) (*sql.Rows,
 		return nil, nil, err
 	}
 	return rows, cancel, nil
+}
+
+type AbstractConnectionManager interface {
+	Connect(cfg DbConfig) error
+	Close()
+	Exec(query string, args ...interface{}) error
+	QueryRow(query string, args ...interface{}) (*sql.Row, func(), error)
+	Query(query string, args ...interface{}) (*sql.Rows, func(), error)
 }

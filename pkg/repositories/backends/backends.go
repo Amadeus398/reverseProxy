@@ -23,22 +23,24 @@ type Backend struct {
 
 var ErrBackendsNotFound = fmt.Errorf("backend not found")
 
+// Create creates backend data
 func Create(b *Backend) error {
 	row, cancel, err := db.ConnManager.QueryRow(sqlBackCreate, b.Address, b.Site.Id)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer cancel()
 	if err := row.Scan(&b.Id); err != nil {
-		panic(err)
+		return err
 	}
 	return nil
 }
 
+// Read reads backend data
 func Read(b *Backend) error {
 	row, cancel, err := db.ConnManager.QueryRow(sqlGet, b.Id)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer cancel()
 	b.Site = &sites.Site{}
@@ -51,6 +53,7 @@ func Read(b *Backend) error {
 	return nil
 }
 
+// Update updates backend data
 func Update(b *Backend) error {
 	oldBack := *b
 	if err := Read(&oldBack); err != nil {
@@ -72,6 +75,7 @@ func Update(b *Backend) error {
 	return nil
 }
 
+// Delete deletes backend data
 func Delete(b *Backend) error {
 	if err := db.ConnManager.Exec(sqlDelete, b.Id); err != nil {
 		if err == db.ErrNothingDone {
@@ -82,6 +86,7 @@ func Delete(b *Backend) error {
 	return nil
 }
 
+// List returns all backends from database
 func List() ([]*Backend, error) {
 	backends := []*Backend{}
 	rows, cancel, err := db.ConnManager.Query(sqlList)
@@ -101,5 +106,4 @@ func List() ([]*Backend, error) {
 		backends = append(backends, &backend)
 	}
 	return backends, nil
-
 }

@@ -14,28 +14,32 @@ import (
 
 const resourceName = "backends"
 
+// Create creates backends data
 func Create(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlerBackend", "create")
 	log.GetInfo().Str("when", "starting processing request").Msg("start handler Create")
+
 	w.Header().Set("Content-Type", "text/json; charset=utf-8")
 	log.GetInfo().Msg("read request body")
 	buf, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.GetError().Str("when", "read body").
+			Err(err).Msg("unable to read body")
+		panic(err)
+	}
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			log.GetError().Str("when", "close body").Msg("unable to close body")
+			log.GetError().Str("when", "close body").
+				Err(err).Msg("unable to close body")
 			return
 		}
 	}()
-	if err != nil {
-		log.GetError().Str("when", "read body").Msg("unable to read body")
-		panic(err)
-	}
 
 	backend := backends.Backend{}
 	log.GetInfo().Msg("unmarshal request body")
 	if err := json.Unmarshal(buf, &backend); err != nil {
 		log.GetError().Str("when", "unmarshal request body").
-			Msg("unable to unmarshal request body")
+			Err(err).Msg("unable to unmarshal request body")
 		panic(err)
 	}
 
@@ -43,7 +47,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("unmarshal request raw params to get site_id")
 	if err := json.Unmarshal(buf, &requestRawParams); err != nil {
 		log.GetError().Str("when", "unmarshal request raw params").
-			Msg("unable to unmarshal request raw params")
+			Err(err).Msg("unable to unmarshal request raw params")
 		panic(err)
 	}
 
@@ -51,7 +55,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	siteId, err := strconv.Atoi(string(requestRawParams["site_id"]))
 	if err != nil {
 		log.GetError().Str("when", "convert site_id to integer").
-			Msg("unable to convert site_id")
+			Err(err).Msg("unable to convert site_id")
 		panic(err)
 	}
 
@@ -62,12 +66,12 @@ func Create(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := formatters.WriteJsonOp(w, "{}", resourceName, formatters.OpCreate); err != nil {
 				log.GetError().Str("when", "site not found").Str("when", "send response").
-					Msg("unable to send response")
+					Err(err).Msg("unable to send response")
 				panic(err)
 			}
 			return
 		}
-		log.GetError().Str("when", "get site").Msg("unable to get site")
+		log.GetError().Str("when", "get site").Err(err).Msg("unable to get site")
 		panic(err)
 	}
 
@@ -78,12 +82,14 @@ func Create(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := formatters.WriteJsonOp(w, "{}", resourceName, formatters.OpCreate); err != nil {
 				log.GetError().Str("when", "backends not found").
-					Str("when", "send response").Msg("unable to send response")
+					Str("when", "send response").
+					Err(err).Msg("unable to send response")
 				panic(err)
 			}
 			return
 		}
-		log.GetError().Str("when", "create backend").Msg("failed to create backend")
+		log.GetError().Str("when", "create backend").
+			Err(err).Msg("failed to create backend")
 		panic(err)
 	}
 
@@ -91,27 +97,30 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	bytes, err := json.Marshal(&backend)
 	if err != nil {
 		log.GetError().Str("when", "marshal created backend").
-			Msg("unable marshal created backend")
+			Err(err).Msg("unable marshal created backend")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("send response created backend")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpCreate); err != nil {
 		log.GetError().Str("when", "send response created backend").
-			Msg("unable to send response")
+			Err(err).Msg("unable to send response")
 		panic(err)
 	}
 	log.GetInfo().Msg("exiting handler Create")
 }
 
+// Read reads backends data
 func Read(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlerBackends", "read")
 	log.GetInfo().Str("when", "starting processing request").Msg("start handler Read")
+
 	w.Header().Set("Content-Type", "text/json; charset=utf-8")
 	log.GetInfo().Msg("get and convert id")
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil {
-		log.GetError().Str("when", "get and convert id").Msg("failed get and convert id")
+		log.GetError().Str("when", "get and convert id").
+			Err(err).Msg("failed get and convert id")
 		panic(err)
 	}
 	backend := backends.Backend{Id: int64(id)}
@@ -120,31 +129,36 @@ func Read(w http.ResponseWriter, r *http.Request) {
 		if err == backends.ErrBackendsNotFound {
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := formatters.WriteJsonOp(w, "{}", resourceName, formatters.OpGet); err != nil {
-				log.GetError().Str("when", "read backend").Str("when", "backends not found").
-					Str("when", "send response").Msg("unable to send response")
+				log.GetError().Str("when", "read backend").
+					Str("when", "backends not found").Str("when", "send response").
+					Err(err).Msg("unable to send response")
 				panic(err)
 			}
 			return
 		}
-		log.GetError().Str("when", "read backend").Msg("failed to read backends")
+		log.GetError().Str("when", "read backend").
+			Err(err).Msg("failed to read backends")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("marshal read backend")
 	bytes, err := json.Marshal(&backend)
 	if err != nil {
-		log.GetError().Str("when", "marshal read backend").Msg("unable to marshal backend")
+		log.GetError().Str("when", "marshal read backend").
+			Err(err).Msg("unable to marshal backend")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("send response read backend")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpGet); err != nil {
-		log.GetError().Str("when", "send response read backend").Msg("unable to send response")
+		log.GetError().Str("when", "send response read backend").
+			Err(err).Msg("unable to send response")
 		panic(err)
 	}
 	log.GetInfo().Msg("exiting handler Read")
 }
 
+// Update updates backends data
 func Update(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlerBackend", "update")
 	log.GetInfo().Str("when", "starting processing request").Msg("start handler Update")
@@ -153,26 +167,30 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("get and convert id")
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil {
-		log.GetError().Str("when", "get and convert id").Msg("failed to get and convert id")
+		log.GetError().Str("when", "get and convert id").
+			Err(err).Msg("failed to get and convert id")
 		panic(err)
 	}
 	backend := backends.Backend{Id: int64(id)}
 	log.GetInfo().Msg("read request body")
 	buf, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.GetError().Str("when", "read request body").
+			Err(err).Msg("unable to read body")
+		panic(err)
+	}
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			log.GetError().Str("when", "close body").Msg("unable to close body")
+			log.GetError().Str("when", "close body").
+				Err(err).Msg("unable to close body")
 			panic(err)
 		}
 	}()
-	if err != nil {
-		log.GetError().Str("when", "read request body").Msg("unable to read body")
-		panic(err)
-	}
 
 	log.GetInfo().Msg("unmarshal request body")
 	if err := json.Unmarshal(buf, &backend); err != nil {
-		log.GetError().Str("when", "unmarshal request body").Msg("unable to unmarshal body ")
+		log.GetError().Str("when", "unmarshal request body").
+			Err(err).Msg("unable to unmarshal body ")
 		panic(err)
 	}
 
@@ -182,40 +200,46 @@ func Update(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := formatters.WriteJsonOp(w, "{}", resourceName, formatters.OpUpdate); err != nil {
 				log.GetError().Str("when", "update backend").
-					Str("when", "backends not found").
-					Str("when", "send response").Msg("unable to send response")
+					Str("when", "backends not found").Str("when", "send response").
+					Err(err).Msg("unable to send response")
 				panic(err)
 			}
 			return
 		}
-		log.GetError().Str("when", "update backend").Msg("failed to update backend")
+		log.GetError().Str("when", "update backend").
+			Err(err).Msg("failed to update backend")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("marshal update backend")
 	bytes, err := json.Marshal(&backend)
 	if err != nil {
-		log.GetError().Str("when", "marshal update backend").Msg("unable to marshal backend")
+		log.GetError().Str("when", "marshal update backend").
+			Err(err).Msg("unable to marshal backend")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("send response with update backend")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpUpdate); err != nil {
-		log.GetError().Str("when", "send response with update backend").Msg("unable to send response")
+		log.GetError().Str("when", "send response with update backend").
+			Err(err).Msg("unable to send response")
 		panic(err)
 	}
 	log.GetInfo().Msg("exiting handler Update")
 }
 
+// Delete deletes backends data
 func Delete(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlerBackends", "delete")
 	log.GetInfo().Str("when", "start processing request").Msg("start handler Delete")
+
 	w.Header().Set("Content-Type", "text/json; charset=utf-8")
 
 	log.GetInfo().Msg("get and convert id")
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil {
-		log.GetError().Str("when", "get and convert id").Msg("failed to get and convert id")
+		log.GetError().Str("when", "get and convert id").
+			Err(err).Msg("failed to get and convert id")
 		panic(err)
 	}
 
@@ -227,25 +251,28 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 			if _, err := formatters.WriteJsonOp(w, "{}", resourceName, formatters.OpDelete); err != nil {
 				log.GetError().Str("when", "delete backend").
 					Str("when", "backends not found").Str("when", "send response").
-					Msg("unable to send response")
+					Err(err).Msg("unable to send response")
 				panic(err)
 			}
 			return
 		}
-		log.GetError().Str("when", "delete backend").Msg("failed to delete backend")
+		log.GetError().Str("when", "delete backend").
+			Err(err).Msg("failed to delete backend")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("marshal backend")
 	bytes, err := json.Marshal(&backend)
 	if err != nil {
-		log.GetError().Str("when", "marshal backend").Msg("unable to marshal backend")
+		log.GetError().Str("when", "marshal backend").
+			Err(err).Msg("unable to marshal backend")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("send response deleted backend")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpDelete); err != nil {
-		log.GetError().Str("when", "send response deleted backend").Msg("unable to send response")
+		log.GetError().Str("when", "send response deleted backend").
+			Err(err).Msg("unable to send response")
 		panic(err)
 	}
 	log.GetInfo().Msg("exiting handler Delete")

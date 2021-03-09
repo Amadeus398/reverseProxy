@@ -26,6 +26,8 @@ var (
 	ErrCredentialsNotFound = fmt.Errorf("credential not found")
 )
 
+// AuthorizeUser compares the received user data
+// with the database data
 func AuthorizeUser(login, password, host string) (bool, error) {
 	row, cancel, err := db.ConnManager.QueryRow(sqlFindCredential, login, password, host)
 	if err != nil {
@@ -46,13 +48,14 @@ func AuthorizeUser(login, password, host string) (bool, error) {
 	return false, nil
 }
 
+// CreateCredentials creates credentials data
 func CreateCredentials(c *Credentials) error {
 	row, cancel, err := db.ConnManager.QueryRow(sqlCredentialCreate, c.Login, c.Password, c.Site.Id)
 	if err != nil {
 		if err == db.ErrNothingDone {
 			return ErrCredentialsNotFound
 		}
-		panic(err)
+		return err
 	}
 	defer cancel()
 	if err := row.Scan(&c.Id); err != nil {
@@ -61,6 +64,7 @@ func CreateCredentials(c *Credentials) error {
 	return nil
 }
 
+// GetCredential reads credentials data
 func GetCredential(c *Credentials) error {
 	row, cancel, err := db.ConnManager.QueryRow(sqlCredentialsGet, c.Id)
 	if err != nil {
@@ -77,6 +81,7 @@ func GetCredential(c *Credentials) error {
 	return nil
 }
 
+// UpdateCredentials updates credentials data
 func UpdateCredentials(c *Credentials) error {
 	oldCredential := *c
 	if err := GetCredential(&oldCredential); err != nil {
@@ -105,6 +110,7 @@ func UpdateCredentials(c *Credentials) error {
 	return nil
 }
 
+// DeleteCredentials deletes credentials data
 func DeleteCredentials(c *Credentials) error {
 	if err := db.ConnManager.Exec(sqlCredentialDelete, c.Id); err != nil {
 		if err == db.ErrNothingDone {

@@ -10,7 +10,7 @@ import (
 const (
 	sqlSiteCreate         = "INSERT INTO sites (name, host) VALUES ($1, $2) RETURNING id;"
 	sqlSiteGet            = "SELECT * FROM sites WHERE id=$1;"
-	sqlSiteUpdate         = "UPDATE sites SET name=$1, host=$2 WHERE id=$3"
+	sqlSiteUpdate         = "UPDATE sites SET name=$1, host=$2 WHERE id=$3;"
 	sqlSiteDelete         = "DELETE FROM sites WHERE id=$1;"
 	sqlNeedsAuthorization = "SELECT c.login, c.password, s.name FROM credentials c JOIN sites s ON s.id = c.site_id WHERE s.host = $1;"
 )
@@ -25,6 +25,8 @@ type Site struct {
 	Host string `json:"host"`
 }
 
+// Authorization checks the received host
+// in the database
 func Authorization(hostName string) (bool, error) {
 	rows, cancel, err := db.ConnManager.Query(sqlNeedsAuthorization, hostName)
 	if err != nil {
@@ -34,8 +36,7 @@ func Authorization(hostName string) (bool, error) {
 
 	defer func() {
 		if err := rows.Close(); err != nil {
-			// TODO log error
-			return
+			fmt.Errorf("")
 		}
 	}()
 	var log, pass, name string
@@ -45,12 +46,11 @@ func Authorization(hostName string) (bool, error) {
 		}
 		return true, nil
 	}
-	// здесь всегда true
-	//  не тот запрос... надо выдернуть, есть ли совпадения, если нет, то авторизация не нужна
 
 	return false, nil
 }
 
+// Create creates site data
 func Create(site *Site) error {
 	row, cancel, err := db.ConnManager.QueryRow(sqlSiteCreate, site.Name, site.Host)
 	if err != nil {
@@ -61,30 +61,29 @@ func Create(site *Site) error {
 	}
 	defer cancel()
 	if err := row.Scan(&site.Id); err != nil {
-		// TODO error log
 		return err
 	}
 
 	return nil
 }
 
+// GetSite reads site data
 func GetSite(site *Site) error {
 	row, cancel, err := db.ConnManager.QueryRow(sqlSiteGet, site.Id)
 	if err != nil {
-		// TODO error log
-		panic(err)
+		return err
 	}
 	defer cancel()
 	if err := row.Scan(&site.Id, &site.Name, &site.Host); err != nil {
 		if err == sql.ErrNoRows {
 			return ErrSiteNotFound
 		}
-		// TODO error log
 		return err
 	}
 	return nil
 }
 
+// DeleteSite deletes site data
 func DeleteSite(id int64) error {
 	if err := db.ConnManager.Exec(sqlSiteDelete, id); err != nil {
 		if err == db.ErrNothingDone {
@@ -95,6 +94,7 @@ func DeleteSite(id int64) error {
 	return nil
 }
 
+// UpdateSite update site data
 func UpdateSite(site *Site) error {
 	oldSite := *site
 	if err := GetSite(&oldSite); err != nil {

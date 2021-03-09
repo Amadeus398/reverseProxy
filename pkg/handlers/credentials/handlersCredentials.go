@@ -15,6 +15,7 @@ import (
 
 const resourceName = "credentials"
 
+// Create creates credentials data
 func Create(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlerCredentials", "Create")
 	log.GetInfo().Str("when", "start processing request").Msg("start handler Create")
@@ -22,22 +23,24 @@ func Create(w http.ResponseWriter, r *http.Request) {
 
 	log.GetInfo().Msg("read request body")
 	buf, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.GetError().Str("when", "read body").
+			Err(err).Msg("unable to read body")
+		panic(err)
+	}
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			log.GetError().Str("when", "close body").Msg("unable to close body")
+			log.GetError().Str("when", "close body").
+				Err(err).Msg("unable to close body")
 			panic(err)
 		}
 	}()
-	if err != nil {
-		log.GetError().Str("when", "read body").Msg("unable to read body")
-		panic(err)
-	}
 
 	credential := credentials.Credentials{}
 	log.GetInfo().Msg("unmarshal request body")
 	if err := json.Unmarshal(buf, &credential); err != nil {
 		log.GetError().Str("when", "unmarshal request body").
-			Msg("unable to unmarshal request body")
+			Err(err).Msg("unable to unmarshal request body")
 		panic(err)
 	}
 
@@ -45,7 +48,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("unmarshal request raw params to get site_id")
 	if err := json.Unmarshal(buf, &requestRawParams); err != nil {
 		log.GetError().Str("when", "unmarshal request raw params").
-			Msg("unable to unmarshal request raw params")
+			Err(err).Msg("unable to unmarshal request raw params")
 		panic(err)
 	}
 
@@ -53,7 +56,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	siteId, err := strconv.Atoi(string(requestRawParams["site_id"]))
 	if err != nil {
 		log.GetError().Str("when", "convert site_id to integer").
-			Msg("unable to convert site_id")
+			Err(err).Msg("unable to convert site_id")
 		panic(err)
 	}
 	site := sites.Site{Id: int64(siteId)}
@@ -62,13 +65,15 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		if err == sites.ErrSiteNotFound {
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := fmt.Fprint(w, "{}"); err != nil {
-				log.GetError().Str("when", "get site").Str("when", "site not found").
-					Str("when", "send response").Msg("unable to send response")
+				log.GetError().Str("when", "get site").
+					Str("when", "site not found").Str("when", "send response").
+					Err(err).Msg("unable to send response")
 				panic(err)
 			}
 			return
 		}
-		log.GetError().Str("when", "get site").Msg("unable to get site")
+		log.GetError().Str("when", "get site").
+			Err(err).Msg("unable to get site")
 		panic(err)
 	}
 
@@ -79,12 +84,13 @@ func Create(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := fmt.Fprint(w, "{}"); err != nil {
 				log.GetError().Str("when", "create credential").
-					Str("when", "credentials not found").
-					Str("when", "send response").Msg("unable to send response")
+					Str("when", "credentials not found").Str("when", "send response").
+					Err(err).Msg("unable to send response")
 				panic(err)
 			}
 		}
-		log.GetError().Str("when", "create credential").Msg("failed to create credential")
+		log.GetError().Str("when", "create credential").
+			Err(err).Msg("failed to create credential")
 		panic(err)
 	}
 
@@ -92,18 +98,20 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	bytes, err := json.Marshal(credential)
 	if err != nil {
 		log.GetError().Str("when", "marshal created credential").
-			Msg("unable marshal credential")
+			Err(err).Msg("unable marshal credential")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("send response created credential")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpCreate); err != nil {
-		log.GetError().Str("when", "send response create credential").Msg("unable to send response")
+		log.GetError().Str("when", "send response create credential").
+			Err(err).Msg("unable to send response")
 		panic(err)
 	}
 	log.GetInfo().Msg("exiting handler Create")
 }
 
+// Read reads credentials data
 func Read(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersCredentials", "read")
 	log.GetInfo().Str("when", "starting processing request").Msg("start handler Update")
@@ -112,7 +120,8 @@ func Read(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("get and convert id")
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil {
-		log.GetError().Str("when", "get and convert id").Msg("failed to get and convert id")
+		log.GetError().Str("when", "get and convert id").
+			Err(err).Msg("failed to get and convert id")
 		panic(err)
 	}
 
@@ -124,30 +133,34 @@ func Read(w http.ResponseWriter, r *http.Request) {
 			if _, err := fmt.Fprint(w, "{}"); err != nil {
 				log.GetError().Str("when", "read credential").
 					Str("when", "credentials not found").Str("when", "send response").
-					Msg("unable to send response")
+					Err(err).Msg("unable to send response")
 				panic(err)
 			}
 			return
 		}
-		log.GetError().Str("when", "read credential").Msg("failed to read credential")
+		log.GetError().Str("when", "read credential").
+			Err(err).Msg("failed to read credential")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("marshal read credential")
 	bytes, err := json.Marshal(credential)
 	if err != nil {
-		log.GetError().Str("when", "marshal read credential").Msg("unable to marshal credential")
+		log.GetError().Str("when", "marshal read credential").
+			Err(err).Msg("unable to marshal credential")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("send response read credential")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpGet); err != nil {
-		log.GetError().Str("when", "send response read credential").Msg("unable to send response")
+		log.GetError().Str("when", "send response read credential").
+			Err(err).Msg("unable to send response")
 		panic(err)
 	}
 	log.GetInfo().Msg("exiting handler Read")
 }
 
+// Update updates credentials data
 func Update(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersCredentials", "update")
 	log.GetInfo().Str("when", "starting processing request").Msg("start handler Update")
@@ -156,27 +169,31 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("get and convert id")
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil {
-		log.GetError().Str("when", "get and convert id").Msg("failed to get and convert id")
+		log.GetError().Str("when", "get and convert id").
+			Err(err).Msg("failed to get and convert id")
 		panic(err)
 	}
 
 	credential := credentials.Credentials{Id: int64(id)}
 	log.GetInfo().Msg("read request body")
 	buf, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.GetError().Str("when", "read request body").
+			Err(err).Msg("unable to read body")
+		panic(err)
+	}
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			log.GetError().Str("when", "close body").Msg("unable to close body")
+			log.GetError().Str("when", "close body").
+				Err(err).Msg("unable to close body")
 			panic(err)
 		}
 	}()
-	if err != nil {
-		log.GetError().Str("when", "read request body").Msg("unable to read body")
-		panic(err)
-	}
 
 	log.GetInfo().Msg("unmarshal request body")
 	if err := json.Unmarshal(buf, &credential); err != nil {
-		log.GetError().Str("when", "unmarshal request body").Msg("unable to unmarshal body ")
+		log.GetError().Str("when", "unmarshal request body").
+			Err(err).Msg("unable to unmarshal body ")
 		panic(err)
 	}
 
@@ -186,31 +203,35 @@ func Update(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := fmt.Fprint(w, "{}"); err != nil {
 				log.GetError().Str("when", "update credential").
-					Str("when", "credentials not found").
-					Str("when", "send response").Msg("unable to send response")
+					Str("when", "credentials not found").Str("when", "send response").
+					Err(err).Msg("unable to send response")
 				panic(err)
 			}
 			return
 		}
-		log.GetError().Str("when", "update credential").Msg("failed to update credential")
+		log.GetError().Str("when", "update credential").
+			Err(err).Msg("failed to update credential")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("marshal update credential")
 	bytes, err := json.Marshal(credential)
 	if err != nil {
-		log.GetError().Str("when", "marshal update credential").Msg("unable to marshal credential")
+		log.GetError().Str("when", "marshal update credential").
+			Err(err).Msg("unable to marshal credential")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("send response with update credential")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpUpdate); err != nil {
-		log.GetError().Str("when", "send response with update backend").Msg("unable to send response")
+		log.GetError().Str("when", "send response with update backend").
+			Err(err).Msg("unable to send response")
 		panic(err)
 	}
 	log.GetInfo().Msg("exiting handler Update")
 }
 
+// Delete deletes credentials data
 func Delete(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersCredentials", "delete")
 	log.GetInfo().Str("when", "start processing request").Msg("start handler Delete")
@@ -219,7 +240,8 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("get and convert id")
 	id, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil {
-		log.GetError().Str("when", "get and convert id").Msg("failed to get and convert id")
+		log.GetError().Str("when", "get and convert id").
+			Err(err).Msg("failed to get and convert id")
 		panic(err)
 	}
 
@@ -231,26 +253,28 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 			if _, err := formatters.WriteJsonOp(w, "{}", resourceName, formatters.OpDelete); err != nil {
 				log.GetError().Str("when", "delete credential").
 					Str("when", "credential found").Str("when", "send response").
-					Msg("unable to send response")
+					Err(err).Msg("unable to send response")
 				panic(err)
 			}
 			return
 		}
-		log.GetError().Str("when", "delete backend").Msg("failed to delete backend")
+		log.GetError().Str("when", "delete backend").
+			Err(err).Msg("failed to delete backend")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("marshal credential")
 	bytes, err := json.Marshal(&credential)
 	if err != nil {
-		log.GetError().Str("when", "marshal credential").Msg("unable to marshal credential")
+		log.GetError().Str("when", "marshal credential").
+			Err(err).Msg("unable to marshal credential")
 		panic(err)
 	}
 
 	log.GetInfo().Msg("send response deleted credential")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpDelete); err != nil {
 		log.GetError().Str("when", "send response deleted credential").
-			Msg("unable to send response")
+			Err(err).Msg("unable to send response")
 
 		panic(err)
 	}

@@ -22,24 +22,36 @@ import (
 )
 
 var (
-	correctExit        = fmt.Errorf("finished succesfully")
-	crudServerInit     = make(chan struct{})
-	reverseProxyInit   = make(chan struct{})
-	backendManagerInit = make(chan struct{})
+	correctExit = fmt.Errorf("finished succesfully")
 )
+
+type serverConfig interface {
+	GetRevPort() string
+	GetRouterPort() string
+}
+
+type loggerConfig interface {
+	GetLogLevel() zerolog.Level
+}
 
 func main() {
 	loggers := logging.NewLogs("cmd", "main")
 	loggers.GetInfo().Msg("start reverse proxy server")
 
-	cache := &config.EnvCache{}
-	if err := envconfig.Process("", cache); err != nil {
+	reverseProxyInit := make(chan struct{})
+	crudServerInit := make(chan struct{})
+	backendManagerInit := make(chan struct{})
+
+	cfg := &config.EnvCache{}
+	if err := envconfig.Process("", cfg); err != nil {
 		loggers.GetError().Err(err).Msg("unable to parse the environment")
 		panic(err)
 	}
 
-	if err := db.ConnManager.Connect(); err != nil {
-		loggers.GetError().Str("when", "connect db").Msg("error connecting to the DB")
+	dbCfg := db.DbConfig(cfg)
+
+	if err := db.ConnManager.Connect(dbCfg); err != nil {
+		loggers.GetError().Str("when", "connect db").Err(err).Msg("error connecting to the DB")
 		panic(err)
 	}
 
@@ -61,14 +73,19 @@ func main() {
 	router.HandleFunc("/backends/{id:[0-9]+}", backends.Update).Methods("PUT")
 	router.HandleFunc("/backends/{id:[0-9]+}", backends.Delete).Methods("DELETE")
 
+	srvCfg := serverConfig(cfg)
 	srvCRUD := http.Server{
-		Addr:    cache.RouterPort,
-		Handler: router,
+		Addr:         srvCfg.GetRouterPort(),
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
 	}
 
 	reverseProxy := http.Server{
-		Addr:    cache.RevPort,
-		Handler: handler.RevHandler{},
+		Addr:         srvCfg.GetRevPort(),
+		Handler:      handler.RevHandler{},
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
 	}
 
 	ctx := context.TODO()
@@ -88,12 +105,13 @@ func main() {
 
 			if err := srvCRUD.Shutdown(shutdownCtx); err != nil {
 				loggers.GetError().Str("server", "srvCRUD").Str("when", "received os signal").
-					Msg("failed shutdown srvCRUD")
+					Err(err).Msg("failed shutdown srvCRUD")
 				panic(err)
 			}
 			if err := reverseProxy.Shutdown(shutdownCtx); err != nil {
 				loggers.GetError().Str("server", "reverseProxy").
-					Str("when", "received os signal").Msg("failed shutdown reverseProxy")
+					Str("when", "received os signal").
+					Err(err).Msg("failed shutdown reverseProxy")
 				panic(err)
 			}
 			return correctExit
@@ -104,9 +122,15 @@ func main() {
 			defer cancel()
 
 			if err := srvCRUD.Shutdown(shutdownCtx); err != nil {
+				loggers.GetError().Str("server", "srvCRUD").
+					Str("when", "received context closure signal").Err(err).
+					Msg("failed shutdown srvCRUD")
 				panic(err)
 			}
 			if err := reverseProxy.Shutdown(shutdownCtx); err != nil {
+				loggers.GetError().Str("server", "reverseProxy").
+					Str("when", "received context closure signal").Err(err).
+					Msg("failed shutdown reverseProxy")
 				panic(err)
 			}
 			return errGroupCtx.Err()
@@ -146,10 +170,13 @@ func main() {
 		return backendManager.BackendMgr.Serve()
 	})
 
+	logCfg := loggerConfig(cfg)
+
 	<-crudServerInit
 	<-reverseProxyInit
 	<-backendManagerInit
-	zerolog.SetGlobalLevel(cache.GetLogLevel())
+
+	zerolog.SetGlobalLevel(logCfg.GetLogLevel())
 
 	if err := errGroup.Wait(); err != nil {
 		if err == correctExit {
