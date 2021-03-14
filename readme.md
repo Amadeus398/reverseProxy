@@ -17,21 +17,21 @@ Before you start, configure the environment, where:
 - Environment for start reverseProxy:
 
 ```
-RevPort   string // port of reverseProxy server
-Router    string // port of CRUDserver
-Loglevel  string // loglevel to display logs
+REVPORT   string // port of reverseProxy server
+ROUTERPORT    string // port of CRUDserver
+LOGLEVEL  string // loglevel to display logs
 ```
 
 
 - Environment for start PostgreSQL server:
 
 ```
-Host       string // host
-Port       string // port 'recomended "5432"'
-User       string // user login
-Password   string // user password
-Dbname     string // DB name
-Sslmode    string // sslmode 
+HOST       string // host default value "127.0.0.1"
+PORT       string // port default value "5432"
+USER       string // user login
+PASSWORD   string // user password
+DBNAME     string // DB name
+SSLMODE    string // sslmode default value "disabled"
 ```
 
 To get started, run
@@ -41,7 +41,7 @@ $ go run main.go
 ---
 
 ## Description
-**Database** include 3 tables:
+**Database** includes 3 tables:
 - _Credentials_
    - it stores a login, password and site_id of user;
 - _Sites_
@@ -66,16 +66,93 @@ all the clients by the specified host, and randomly gives "alive" client
 with the current address. 
 
 ---
+
+## Description of the CRUD server operation
+
+In order for the reverseProxy to function correctly, you need to enter 
+the data in the database tables.
+```
+Please note that the reverseProxy can only work with PostgreSQL, because 
+the pgx driver is installed.
+```
+
+Table *Sites* stores a name and host of site, for example:
+
+|  | id | name | host |
+---|---:|:---|:---|
+1| 1 | example | example.com|
+
+Table *Backends* stores addresses of site_host, for example:
+
+| | id | address | site_id |
+---|---:|:---|:---|
+1| 1|93.184.216.34:80| 1|
+
+*Note that the site_id in the Backends corresponds to the id in the Sites*
+
+Table *Credentials* stores a login, password and site_id of user, for example:
+
+| | id | login | password | site_id |
+---|---:|:---|:---|:---|
+1| 1 | someUser | somePassword | 1|
+
+*If there is at least 1 credential on the specified host, the reverseProxy 
+requests authorization of this user.*
+
+Let's look at the implementation of the CRUD handler using the example 
+of working with the *Credentials* table.
+
+To **create** a new credential, send a POST request:
+
+```
+POST http://localhost:8080/credentials
+Content-Type: text/json; charset=utf-8
+
+{
+"login": "Vasya",
+"password": "Ivanov",
+"site_id": 1
+}
+```
+
+To **read** the credential by id, send a GET request:
+
+```
+GET http://localhost:8080/credentials/1
+Accept: text/json
+```
+
+To **update** a login or a password, send a PUT request:
+
+```
+PUT http://localhost:8080/credentials/1
+Content-Type: text/json; charset=utf-8
+
+{
+"login": "Vasya",
+"password": "Petrov"
+}
+```
+
+To **delete** the credential by id, send a DELETE request:
+
+```
+DELETE http://localhost:8080/credentials/1
+```
+
+The implementation of the CRUD handler with tables of *Backends* 
+and *Sites* follows the same principle.
+
+
+---
 ## Used libraries
-[github.com/DATA-DOG/go-sqlmock][1]<br>
-[github.com/gorilla/mux][2]<br>
-[github.com/jackc/pgx/v4][3]<br>
-[github.com/kelseyhightower/envconfig][4]<br>
-[github.com/rs/zerolog][5]<br>
 
+[github.com/DATA-DOG/go-sqlmock](https://github.com/DATA-DOG/go-sqlmock)
 
-[1]: (https://github.com/DATA-DOG/go-sqlmock)
-[2]: (https://github.com/gorilla/mux)
-[3]: (https://github.com/jackc/pgx)
-[4]: (https://github.com/kelseyhightower/envconfig)
-[5]: (https://github.com/rs/zerolog)
+[github.com/gorilla/mux](https://github.com/gorilla/mux)
+
+[github.com/jackc/pgx/v4](https://github.com/jackc/pgx)
+
+[github.com/kelseyhightower/envconfig](https://github.com/kelseyhightower/envconfig)
+
+[github.com/rs/zerolog](https://github.com/rs/zerolog)
