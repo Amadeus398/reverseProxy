@@ -17,9 +17,9 @@ Before you start, configure the environment, where:
 - Environment for start reverseProxy:
 
 ```
-REVPORT   string // port of reverseProxy server
+REVPORT       string // port of reverseProxy server
 ROUTERPORT    string // port of CRUDserver
-LOGLEVEL  string // loglevel to display logs
+LOGLEVEL      string // loglevel to display logs
 ```
 
 
