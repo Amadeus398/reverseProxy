@@ -38,32 +38,6 @@ To get started, run
 ```
 $ go run main.go
 ```
----
-
-## Description
-**Database** includes 3 tables:
-- _Credentials_
-   - it stores a login, password and site_id of user;
-- _Sites_
-   - it stores a name and host of site;
-- _Backends_
-   - it stores addresses of site_host;
-    
-**AuthorizeManager** responsible for user _authorization_. When reverseProxy 
-receives a request, AuthorizeManager checks the database to see if there 
-are credentials for the specified host. If it finds at least one, it 
-means that authorization required, and redirects the user to the authorization 
-page. The user enters a username and password, which the AuthorizeManager 
-checks with the database (Credentials). If the username and password match 
-the user's data, the AuthorizeManager open access to the site.
-
-**BackendManager** responsible for _backends_. It gets all addresses 
-of each host from the database (Backends), puts them in the endpoint 
-map (endpoints[string]*Client), syncs them every 20 seconds, and checks 
-the connection with each client every 5 seconds. 
-After the user has passed authorization, BackendManager goes through 
-all the clients by the specified host, and randomly gives "alive" client 
-with the current address. 
 
 ---
 
@@ -145,6 +119,101 @@ and *Sites* follows the same principle.
 
 
 ---
+
+## Description of the reverseProxy operation
+
+After the database is filled, the reverseProxy is ready to work.
+For example, we have a user in the database with a login and a password, 
+registered on the site "example.com". Our reverseProxy will 
+listen for requests on port 8080.
+
+When the reverseProxy receives a request:
+```
+GET http://localhost:8080/
+Host: example.com
+Accept: text/json
+Authorization: Basic ...=
+```
+it contacts the AuthorizeManager, that checks the database to see if there
+are credentials for the specified host. If it finds at least one, it
+means that authorization required, and redirects the user to the authorization
+page. If the user entered incorrect data (or didn't enter the data), the 
+reverseProxy sends a "status: unauthorized" response, with the status code 401:
+
+```
+HTTP/1.1 401 Unauthorized
+Content-Type: text/json; charset=utf-8
+Www-Authenticate: Basic realm=myProxy
+Date: 
+Content-Length: 26
+
+{"status": "unauthorized"}
+
+Response code: 401 (Unauthorized); Time: 38ms; Content length: 26 bytes
+```
+
+When the user entered the correct data(or authorization is not required), 
+the reverseProxy contacts the BackendManager, 
+that responsible for balancing the outgoing endpoints. It searches the database 
+for the specified host and the addresses of clients on this host.
+
+_**BackendManager** responsible for backends. It gets all addresses
+of each host from the database (Backends), puts them in the endpoint
+map (endpoints[string]*Client), syncs them every 20 seconds, and checks
+the connection with each client every 5 seconds._
+
+If no such host exists, the reverseProxy send a "service not found" response 
+with the status code 502:
+
+```
+HTTP/1.1 502 Bad Gateway
+Content-Type: text/json; charset=utf-8
+Date: 
+Content-Length: 32
+
+{"message": "service not found"}
+
+Response code: 502 (Bad Gateway); Time: 141ms; Content length: 32 bytes
+```
+
+If the BackendManager finds the host, but there are no clients (or the client 
+is not "alive"), the reverseProxy sends a response "service unavailable" with 
+the status code 503:
+
+```
+HTTP/1.1 503 Service Unavailable
+Content-Type: text/json; charset=utf-8
+Date: 
+Content-Length: 34
+
+{"message": "service unavailable"}
+
+Response code: 503 (Service Unavailable); Time: 114ms; Content length: 34 bytes
+```
+
+When the BackendManager finds a host and "alive" client in the database, the 
+reverseProxy sends a response with status code 200:
+
+```
+HTTP/1.1 200 OK
+Age: 540015
+Cache-Control: max-age=604800
+Content-Type: text/html; charset=UTF-8
+Date: 
+...
+
+<!doctype html>
+<html>
+    some body...
+</html>
+
+
+Response code: 200 (OK); Time: 321ms; Content length: 1256 bytes
+```
+
+---
+
+
 ## Used libraries
 
 [github.com/DATA-DOG/go-sqlmock](https://github.com/DATA-DOG/go-sqlmock)
