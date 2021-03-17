@@ -6,6 +6,8 @@ import (
 	"reverseProxy/pkg/repositories/sites"
 )
 
+var AuthorizeMnr Authorize
+
 type Authorize struct {
 	log *logging.Logger
 }

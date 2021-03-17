@@ -55,7 +55,12 @@ func main() {
 		panic(err)
 	}
 
-	defer db.ConnManager.Close()
+	defer func() {
+		if err := db.ConnManager.Close(); err != nil {
+			loggers.GetError().Str("when", "close db").Err(err).Msg("unable close connection")
+			panic(err)
+		}
+	}()
 
 	router := mux.NewRouter()
 	router.HandleFunc("/credentials", credentials.Create).Methods("POST")

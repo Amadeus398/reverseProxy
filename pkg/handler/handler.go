@@ -14,8 +14,7 @@ import (
 const monkeys = "40000 тысяч обезьян в жопу сунули банан"
 
 type RevHandler struct {
-	log     *logging.Logger
-	authMgr *authorizeManager.Authorize
+	log *logging.Logger
 }
 
 func (h RevHandler) getLogs() *logging.Logger {
@@ -23,13 +22,6 @@ func (h RevHandler) getLogs() *logging.Logger {
 		h.log = logging.NewLogs("handler", "serveHTTP")
 	}
 	return h.log
-}
-
-func (h RevHandler) GetAuthMgr() *authorizeManager.Authorize {
-	if h.authMgr == nil {
-		h.authMgr = &authorizeManager.Authorize{}
-	}
-	return h.authMgr
 }
 
 func (h RevHandler) sendAuthorizationQuery(w http.ResponseWriter) error {
@@ -51,7 +43,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	host := r.Host
 	h.getLogs().GetInfo().Msg("verifying authorization requirements")
-	needAuth, err := h.GetAuthMgr().NeedAuth(host)
+	needAuth, err := authorizeManager.AuthorizeMnr.NeedAuth(host)
 	if err != nil {
 		h.getLogs().GetError().Str("when", "verifying authorization requirement").
 			Err(err).Msg("failed verifying")
@@ -72,7 +64,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		h.getLogs().GetInfo().Msg("checking the user's data in the database")
-		authorized, err := h.GetAuthMgr().AuthorizeUser(login, password, host)
+		authorized, err := authorizeManager.AuthorizeMnr.AuthorizeUser(login, password, host)
 		if err != nil {
 			h.getLogs().GetError().Str("when", "checking the user's data").
 				Err(err).Msg("failed check user's data")
