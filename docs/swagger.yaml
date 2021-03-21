@@ -1,0 +1,100 @@
+basePath: /
+definitions:
+  sites.Site:
+    properties:
+      host:
+        example: site.com
+        type: string
+      name:
+        example: site
+        type: string
+    type: object
+host: localhost:80
+info:
+  contact: {}
+  description: How to work CRUD server in reverseProxy
+  title: CRUD server in reverseProxy
+  version: 1.0.0
+paths:
+  /sites:
+    post:
+      consumes:
+      - application/json
+      description: Create site
+      parameters:
+      - description: site info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/sites.Site'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/sites.Site'
+        default:
+          description: error
+          schema:
+            type: string
+      summary: Create new site
+      tags:
+      - Sites
+  /sites/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete site
+      parameters:
+      - description: site ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sites.Site'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/sites.Site'
+      summary: Delete site based on given id
+      tags:
+      - Sites
+    get:
+      consumes:
+      - application/json
+      description: get site
+      parameters:
+      - description: site ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sites.Site'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/sites.Site'
+      summary: Get site based on given id
+      tags:
+      - Sites
+schemes:
+- http
+swagger: "2.0"

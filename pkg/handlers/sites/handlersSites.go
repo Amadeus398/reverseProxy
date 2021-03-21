@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
-	_ "github.com/swaggo/swag"
 	"io/ioutil"
 	"net/http"
 	"reverseProxy/pkg/formatters"
@@ -15,19 +14,19 @@ import (
 
 const resourceName = "site"
 
-// Create site godoc
+// Create godoc
 // @Swagger:operation POST /sites Create
-// @Summary create site
-// @Tag Sites
-// @Description create site
+// @Summary Create new site
+// @Tags Sites
+// @Description Create site
 // @Accept json
 // @Produce json
-// @Params input body site true "site info"
-// @Success 200 {object}
-// @Failure 404 {object} httputil.HTTPError
+// @Param input body sites.Site true "site info"
+// @Success 200 {integer} integer 1
+// @Failure 404 {object} sites.Site sites.ErrSiteNotFound
+// @Failure default {string} string "error"
 // @Router /sites [post]
-// Create creates sites data
-
+// Create creates new site
 func Create(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersSites", "Create")
 	log.GetInfo().Str("when", "start processing request").Msg("start handler Create")
@@ -70,6 +69,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		}
 		log.GetError().Str("when", "create site").
 			Err(err).Msg("failed to create site")
+		// TODO error internal
 		panic(err)
 	}
 
@@ -90,15 +90,16 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("exiting handler Create")
 }
 
+// Read godoc
 // @Swagger:operation GET /sites/{id} Get
-// @Summary get site
-// @Tag Sites
+// @Summary Get site based on given id
+// @Tags Sites
 // @Description get site
 // @Accept json
 // @Produce json
-// @Params input body site true "site info"
-// @Success 200 {object}
-// @Failure 404 {object} httputil.HTTPError
+// @Param id path integer true "site ID"
+// @Success 200 {object} sites.Site
+// @Failure 404 {object} sites.Site sites.ErrSiteNotFound
 // @Router /sites/{id} [get]
 // Read reads sites data
 func Read(w http.ResponseWriter, r *http.Request) {
@@ -149,17 +150,6 @@ func Read(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("exiting handler Read")
 }
 
-// @Swagger:operation PUT /sites/{id} Update
-// @Summary create site
-// @Tag Sites
-// @Description create site
-// @Accept json
-// @Produce json
-// @Params input body site true "site info"
-// @Success 200 {object}
-// @Failure 404 {object} httputil.HTTPError
-// @Router /sites/{id} [put]
-// Update updates sites data
 func Update(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersSites", "update")
 	log.GetInfo().Str("when", "starting processing request").Msg("start handler Update")
@@ -230,17 +220,18 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("exiting handler Update")
 }
 
+// Delete godoc
 // @Swagger:operation DELETE /sites/{id} Delete
-// @Summary create site
-// @Tag Sites
-// @Description create site
+// @Summary Delete site based on given id
+// @Tags Sites
+// @Description delete site
 // @Accept json
 // @Produce json
-// @Params input body site true "site info"
-// @Success 200 {object}
-// @Failure 404 {object} httputil.HTTPError
+// @Param id path integer true "site ID"
+// @Success 200 {object} sites.Site
+// @Failure 404 {object} sites.Site sites.ErrSiteNotFound
 // @Router /sites/{id} [delete]
-// Delete deletes sites data
+// Delete deletes sites
 func Delete(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersSites", "delete")
 	log.GetInfo().Str("when", "start processing request").Msg("start handler Delete")

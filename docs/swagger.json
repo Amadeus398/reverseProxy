@@ -1,0 +1,151 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "How to work CRUD server in reverseProxy",
+        "title": "CRUD server in reverseProxy",
+        "contact": {},
+        "version": "1.0.0"
+    },
+    "host": "localhost:80",
+    "basePath": "/",
+    "paths": {
+        "/sites": {
+            "post": {
+                "description": "Create site",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sites"
+                ],
+                "summary": "Create new site",
+                "parameters": [
+                    {
+                        "description": "site info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sites.Site"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/sites.Site"
+                        }
+                    },
+                    "default": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/sites/{id}": {
+            "get": {
+                "description": "get site",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sites"
+                ],
+                "summary": "Get site based on given id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "site ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sites.Site"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/sites.Site"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "delete site",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sites"
+                ],
+                "summary": "Delete site based on given id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "site ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sites.Site"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/sites.Site"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "sites.Site": {
+            "type": "object",
+            "properties": {
+                "host": {
+                    "type": "string",
+                    "example": "site.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "site"
+                }
+            }
+        }
+    }
+}

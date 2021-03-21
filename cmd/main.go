@@ -7,12 +7,11 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/rs/zerolog"
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "github.com/swaggo/swag"
 	"golang.org/x/sync/errgroup"
 	"net/http"
 	"os"
 	"os/signal"
-	//_ "reverseProxy/cmd/docs"
+	_ "reverseProxy/docs"
 	"reverseProxy/pkg/backendManager"
 	"reverseProxy/pkg/config"
 	"reverseProxy/pkg/db"
@@ -24,11 +23,13 @@ import (
 	"time"
 )
 
-// @Title reverseProxy
-// @Version 1.0
-// @Description how to work CRUD server
+// @Title CRUD server in reverseProxy
+// @Version 1.0.0
+// @Description How to work CRUD server in reverseProxy
 
-// @Host localhost:8080
+// @Schemes http
+
+// @Host localhost:80
 // @BasePath /
 
 var (

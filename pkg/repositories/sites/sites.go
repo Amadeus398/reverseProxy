@@ -20,9 +20,9 @@ var (
 )
 
 type Site struct {
-	Id   int64  `json:"id"`
-	Name string `json:"name"`
-	Host string `json:"host"`
+	Id   int64  `json:"id" example:"1" swaggerignore:"true"`
+	Name string `json:"name" example:"site"`
+	Host string `json:"host" example:"site.com"`
 }
 
 // Authorization checks the received host
