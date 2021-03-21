@@ -38,7 +38,7 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/sites.Site'
+            type: string
         default:
           description: error
           schema:
@@ -67,7 +67,7 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/sites.Site'
+            type: string
       summary: Delete site based on given id
       tags:
       - Sites
@@ -91,8 +91,38 @@ paths:
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/sites.Site'
+            type: string
       summary: Get site based on given id
+      tags:
+      - Sites
+    put:
+      consumes:
+      - application/json
+      description: update site
+      parameters:
+      - description: site ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: site info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/sites.Site'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sites.Site'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Update site based on given id
       tags:
       - Sites
 schemes:

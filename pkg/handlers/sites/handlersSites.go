@@ -23,7 +23,7 @@ const resourceName = "site"
 // @Produce json
 // @Param input body sites.Site true "site info"
 // @Success 200 {integer} integer 1
-// @Failure 404 {object} sites.Site sites.ErrSiteNotFound
+// @Failure 404 {string} string sites.ErrSiteNotFound
 // @Failure default {string} string "error"
 // @Router /sites [post]
 // Create creates new site
@@ -99,7 +99,7 @@ func Create(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path integer true "site ID"
 // @Success 200 {object} sites.Site
-// @Failure 404 {object} sites.Site sites.ErrSiteNotFound
+// @Failure 404 {string} string sites.ErrSiteNotFound
 // @Router /sites/{id} [get]
 // Read reads sites data
 func Read(w http.ResponseWriter, r *http.Request) {
@@ -150,6 +150,19 @@ func Read(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("exiting handler Read")
 }
 
+// Delete godoc
+// @Swagger:operation PUT /sites/{id} Update
+// @Summary Update site based on given id
+// @Tags Sites
+// @Description update site
+// @Accept json
+// @Produce json
+// @Param id path integer true "site ID"
+// @Param input body sites.Site true "site info"
+// @Success 200 {object} sites.Site
+// @Failure 404 {string} string sites.ErrSiteNotFound
+// @Router /sites/{id} [put]
+// Delete deletes sites
 func Update(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersSites", "update")
 	log.GetInfo().Str("when", "starting processing request").Msg("start handler Update")
@@ -229,7 +242,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path integer true "site ID"
 // @Success 200 {object} sites.Site
-// @Failure 404 {object} sites.Site sites.ErrSiteNotFound
+// @Failure 404 {string} string sites.ErrSiteNotFound
 // @Router /sites/{id} [delete]
 // Delete deletes sites
 func Delete(w http.ResponseWriter, r *http.Request) {

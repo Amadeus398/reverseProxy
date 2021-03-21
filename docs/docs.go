@@ -57,7 +57,7 @@ var doc = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/sites.Site"
+                            "type": "string"
                         }
                     },
                     "default": {
@@ -101,7 +101,52 @@ var doc = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "update site",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sites"
+                ],
+                "summary": "Update site based on given id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "site ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "site info",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
                             "$ref": "#/definitions/sites.Site"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sites.Site"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }
@@ -137,7 +182,7 @@ var doc = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/sites.Site"
+                            "type": "string"
                         }
                     }
                 }
