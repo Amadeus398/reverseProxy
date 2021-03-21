@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	_ "github.com/swaggo/swag"
 	"io/ioutil"
 	"net/http"
 	"reverseProxy/pkg/formatters"
@@ -14,7 +15,19 @@ import (
 
 const resourceName = "site"
 
+// Create site godoc
+// @Swagger:operation POST /sites Create
+// @Summary create site
+// @Tag Sites
+// @Description create site
+// @Accept json
+// @Produce json
+// @Params input body site true "site info"
+// @Success 200 {object}
+// @Failure 404 {object} httputil.HTTPError
+// @Router /sites [post]
 // Create creates sites data
+
 func Create(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersSites", "Create")
 	log.GetInfo().Str("when", "start processing request").Msg("start handler Create")
@@ -77,6 +90,16 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("exiting handler Create")
 }
 
+// @Swagger:operation GET /sites/{id} Get
+// @Summary get site
+// @Tag Sites
+// @Description get site
+// @Accept json
+// @Produce json
+// @Params input body site true "site info"
+// @Success 200 {object}
+// @Failure 404 {object} httputil.HTTPError
+// @Router /sites/{id} [get]
 // Read reads sites data
 func Read(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersSites", "Read")
@@ -126,6 +149,16 @@ func Read(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("exiting handler Read")
 }
 
+// @Swagger:operation PUT /sites/{id} Update
+// @Summary create site
+// @Tag Sites
+// @Description create site
+// @Accept json
+// @Produce json
+// @Params input body site true "site info"
+// @Success 200 {object}
+// @Failure 404 {object} httputil.HTTPError
+// @Router /sites/{id} [put]
 // Update updates sites data
 func Update(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersSites", "update")
@@ -197,6 +230,16 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	log.GetInfo().Msg("exiting handler Update")
 }
 
+// @Swagger:operation DELETE /sites/{id} Delete
+// @Summary create site
+// @Tag Sites
+// @Description create site
+// @Accept json
+// @Produce json
+// @Params input body site true "site info"
+// @Success 200 {object}
+// @Failure 404 {object} httputil.HTTPError
+// @Router /sites/{id} [delete]
 // Delete deletes sites data
 func Delete(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersSites", "delete")

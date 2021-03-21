@@ -6,10 +6,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/rs/zerolog"
+	httpSwagger "github.com/swaggo/http-swagger"
+	_ "github.com/swaggo/swag"
 	"golang.org/x/sync/errgroup"
 	"net/http"
 	"os"
 	"os/signal"
+	//_ "reverseProxy/cmd/docs"
 	"reverseProxy/pkg/backendManager"
 	"reverseProxy/pkg/config"
 	"reverseProxy/pkg/db"
@@ -20,6 +23,13 @@ import (
 	"reverseProxy/pkg/logging"
 	"time"
 )
+
+// @Title reverseProxy
+// @Version 1.0
+// @Description how to work CRUD server
+
+// @Host localhost:8080
+// @BasePath /
 
 var (
 	correctExit = fmt.Errorf("finished succesfully")
@@ -77,6 +87,8 @@ func main() {
 	router.HandleFunc("/backends/{id:[0-9]+}", backends.Read).Methods("GET")
 	router.HandleFunc("/backends/{id:[0-9]+}", backends.Update).Methods("PUT")
 	router.HandleFunc("/backends/{id:[0-9]+}", backends.Delete).Methods("DELETE")
+
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	srvCfg := serverConfig(cfg)
 	srvCRUD := http.Server{
