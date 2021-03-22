@@ -225,3 +225,5 @@ Response code: 200 (OK); Time: 321ms; Content length: 1256 bytes
 [github.com/kelseyhightower/envconfig](https://github.com/kelseyhightower/envconfig)
 
 [github.com/rs/zerolog](https://github.com/rs/zerolog)
+
+[github.com/swaggo/swag](https://github.com/swaggo/swag)
