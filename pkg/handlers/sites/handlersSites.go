@@ -24,7 +24,6 @@ const resourceName = "site"
 // @Param input body sites.Site true "site info"
 // @Success 200 {integer} integer 1
 // @Failure 404 {string} string sites.ErrSiteNotFound
-// @Failure default {string} string "error"
 // @Router /sites [post]
 // Create creates new site
 func Create(w http.ResponseWriter, r *http.Request) {
@@ -37,13 +36,13 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.GetError().Str("when", "read body").
 			Err(err).Msg("unable to read body")
-		panic(err)
+		err.Error()
 	}
 	defer func() {
 		if err := r.Body.Close(); err != nil {
 			log.GetError().Str("when", "close body").
 				Err(err).Msg("unable to close body")
-			panic(err)
+			err.Error()
 		}
 	}()
 
@@ -52,25 +51,32 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	if err := json.Unmarshal(buf, &site); err != nil {
 		log.GetError().Str("when", "unmarshal request body").
 			Err(err).Msg("unable to unmarshal request body")
-		panic(err)
+		err.Error()
 	}
 
 	log.GetInfo().Msg("create site")
 	if err := sites.Create(&site); err != nil {
+		log.GetError().Str("when", "create site").
+			Err(err).Msg("failed to create site")
 		if err == sites.ErrSiteNotFound {
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := fmt.Fprint(w, "{}"); err != nil {
 				log.GetError().Str("when", "create site").
 					Str("when", "sites not found").Str("when", "send response").
 					Err(err).Msg("unable to send response")
-				panic(err)
+				err.Error()
 			}
 			return
 		}
-		log.GetError().Str("when", "create site").
-			Err(err).Msg("failed to create site")
-		// TODO error internal
-		panic(err)
+
+		w.WriteHeader(http.StatusInternalServerError)
+		if _, err := fmt.Fprint(w, "{}"); err != nil {
+			log.GetError().Str("when", "create site").
+				Str("when", "failed to create site").Str("when", "send response").
+				Err(err).Msg("unable to send response")
+			err.Error()
+		}
+		err.Error()
 	}
 
 	log.GetInfo().Msg("marshal created site")
@@ -78,14 +84,14 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.GetError().Str("when", "marshal created site").
 			Err(err).Msg("unable to marshal site")
-		panic(err)
+		err.Error()
 	}
 
 	log.GetInfo().Msg("send response created site")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpCreate); err != nil {
 		log.GetError().Str("when", "send response created site").
 			Err(err).Msg("unable to send response")
-		panic(err)
+		err.Error()
 	}
 	log.GetInfo().Msg("exiting handler Create")
 }
@@ -112,25 +118,33 @@ func Read(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.GetError().Str("when", "get and convert id").
 			Err(err).Msg("failed to get and convert id")
-		panic(err)
+		err.Error()
 	}
 
 	site := sites.Site{Id: int64(id)}
 	log.GetInfo().Msg("start read site with specified id")
 	if err := sites.GetSite(&site); err != nil {
+		log.GetError().Str("when", "read site").
+			Err(err).Msg("failed to read site")
 		if err == sites.ErrSiteNotFound {
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := fmt.Fprint(w, "{}"); err != nil {
 				log.GetError().Str("when", "read site").
 					Str("when", "site not found").Str("when", "send response").
 					Err(err).Msg("unable to send response")
-				panic(err)
+				err.Error()
 			}
 			return
 		}
-		log.GetError().Str("when", "read site").
-			Err(err).Msg("failed to read site")
-		panic(err)
+
+		w.WriteHeader(http.StatusInternalServerError)
+		if _, err := fmt.Fprint(w, "{}"); err != nil {
+			log.GetError().Str("when", "read site").
+				Str("when", "read site").Str("when", "send response").
+				Err(err).Msg("unable to send response")
+			err.Error()
+		}
+		err.Error()
 	}
 
 	log.GetInfo().Msg("marshal read site")
@@ -138,19 +152,19 @@ func Read(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.GetError().Str("when", "marshal read site").
 			Err(err).Msg("unable to marshal site")
-		panic(err)
+		err.Error()
 	}
 
 	log.GetInfo().Msg("send response read site")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpGet); err != nil {
 		log.GetError().Str("when", "send response read site").
 			Err(err).Msg("unable to send response")
-		panic(err)
+		err.Error()
 	}
 	log.GetInfo().Msg("exiting handler Read")
 }
 
-// Delete godoc
+// Update godoc
 // @Swagger:operation PUT /sites/{id} Update
 // @Summary Update site based on given id
 // @Tags Sites
@@ -162,7 +176,7 @@ func Read(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} sites.Site
 // @Failure 404 {string} string sites.ErrSiteNotFound
 // @Router /sites/{id} [put]
-// Delete deletes sites
+// Update updates sites
 func Update(w http.ResponseWriter, r *http.Request) {
 	log := logging.NewLogs("handlersSites", "update")
 	log.GetInfo().Str("when", "starting processing request").Msg("start handler Update")
@@ -173,7 +187,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.GetError().Str("when", "get and convert id").
 			Err(err).Msg("failed to get and convert id")
-		panic(err)
+		err.Error()
 	}
 
 	log.GetInfo().Msg("read request body")
@@ -181,13 +195,13 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.GetError().Str("when", "read request body").
 			Err(err).Msg("unable to read body")
-		panic(err)
+		err.Error()
 	}
 	defer func() {
 		if err := r.Body.Close(); err != nil {
 			log.GetError().Str("when", "close body").
 				Err(err).Msg("unable to close body")
-			panic(err)
+			err.Error()
 		}
 	}()
 
@@ -196,24 +210,31 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	if err := json.Unmarshal(buf, &site); err != nil {
 		log.GetError().Str("when", "unmarshal request body").
 			Err(err).Msg("unable to unmarshal body")
-		panic(err)
+		err.Error()
 	}
 
 	log.GetInfo().Msg("update site")
 	if err := sites.UpdateSite(&site); err != nil {
+		log.GetError().Str("when", "update site").
+			Err(err).Msg("failed to update site")
 		if err == sites.ErrSiteNotFound {
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := fmt.Fprint(w, "{}"); err != nil {
 				log.GetError().Str("when", "update site").
 					Str("when", "site not found").Str("when", "send response").
 					Err(err).Msg("unable to send response")
-				panic(err)
+				err.Error()
 			}
 			return
 		}
-		log.GetError().Str("when", "update site").
-			Err(err).Msg("failed to update site")
-		panic(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		if _, err := fmt.Fprint(w, "{}"); err != nil {
+			log.GetError().Str("when", "update site").
+				Str("when", "failed to update site").Str("when", "send response").
+				Err(err).Msg("unable to send response")
+			err.Error()
+		}
+		err.Error()
 	}
 
 	log.GetInfo().Msg("marshal update site")
@@ -221,14 +242,14 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.GetError().Str("when", "marshal update site").
 			Err(err).Msg("unable to marshal site")
-		panic(err)
+		err.Error()
 	}
 
 	log.GetInfo().Msg("send response update site")
 	if _, err := formatters.WriteJsonOp(w, string(bytes), resourceName, formatters.OpUpdate); err != nil {
 		log.GetError().Str("when", "send response update site").
 			Err(err).Msg("unable to send response")
-		panic(err)
+		err.Error()
 	}
 	log.GetInfo().Msg("exiting handler Update")
 }
@@ -255,24 +276,31 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.GetError().Str("when", "get and convert id").
 			Err(err).Msg("failed to get and convert id")
-		panic(err)
+		err.Error()
 	}
 
 	log.GetInfo().Msg("delete site with specified id")
 	if err := sites.DeleteSite(int64(id)); err != nil {
 		if err == sites.ErrSiteNotFound {
+			log.GetError().Str("when", "delete site").
+				Err(err).Msg("failed to delete site")
 			w.WriteHeader(http.StatusNotFound)
 			if _, err := fmt.Fprint(w, "{}"); err != nil {
 				log.GetError().Str("when", "delete site").
 					Str("when", "sites not found").Str("when", "send response").
 					Err(err).Msg("unable to send response")
-				panic(err)
+				err.Error()
 			}
 			return
 		}
-		log.GetError().Str("when", "delete site").
-			Err(err).Msg("failed to delete site")
-		panic(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		if _, err := fmt.Fprint(w, "{}"); err != nil {
+			log.GetError().Str("when", "delete site").
+				Str("when", "delete site").Str("when", "send response").
+				Err(err).Msg("unable to send response")
+			err.Error()
+		}
+		err.Error()
 	}
 
 	log.GetInfo().Msg("marshal deleted site")
@@ -280,14 +308,14 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.GetError().Str("when", "marshal deleted site").
 			Err(err).Msg("unable to marshal site")
-		panic(err)
+		err.Error()
 	}
 
 	log.GetInfo().Msg("send response deleted site")
 	if _, err := formatters.WriteJsonOp(w, string(obj), resourceName, formatters.OpDelete); err != nil {
 		log.GetError().Str("when", "send response deleted site").
 			Err(err).Msg("unable to send response")
-		panic(err)
+		err.Error()
 	}
 	log.GetInfo().Msg("exiting handler Delete")
 }

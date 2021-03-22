@@ -36,7 +36,7 @@ func Authorization(hostName string) (bool, error) {
 
 	defer func() {
 		if err := rows.Close(); err != nil {
-			fmt.Errorf("")
+			err.Error()
 		}
 	}()
 	var log, pass, name string

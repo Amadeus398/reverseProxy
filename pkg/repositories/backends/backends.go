@@ -16,9 +16,9 @@ const (
 )
 
 type Backend struct {
-	Id      int64       `json:"id"`
-	Address string      `json:"address"`
-	Site    *sites.Site `json:"site"`
+	Id      int64       `json:"id" example:"1" swaggerignore:"true"`
+	Address string      `json:"address" example:"127.0.0.1:80"`
+	Site    *sites.Site `json:"site_id"`
 }
 
 var ErrBackendsNotFound = fmt.Errorf("backend not found")

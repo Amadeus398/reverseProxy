@@ -1,5 +1,24 @@
 basePath: /
 definitions:
+  backends.Backend:
+    properties:
+      address:
+        example: 127.0.0.1:80
+        type: string
+      site_id:
+        $ref: '#/definitions/sites.Site'
+    type: object
+  credentials.Credentials:
+    properties:
+      login:
+        example: someLogin
+        type: string
+      password:
+        example: somePassword
+        type: string
+      site_id:
+        $ref: '#/definitions/sites.Site'
+    type: object
   sites.Site:
     properties:
       host:
@@ -16,6 +35,216 @@ info:
   title: CRUD server in reverseProxy
   version: 1.0.0
 paths:
+  /backends:
+    post:
+      consumes:
+      - application/json
+      description: Create backends
+      parameters:
+      - description: backend info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/backends.Backend'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Create new backends
+      tags:
+      - Backends
+  /backends/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete backends
+      parameters:
+      - description: backends ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backends.Backend'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Delete backends based on given id
+      tags:
+      - Backends
+    get:
+      consumes:
+      - application/json
+      description: get backends
+      parameters:
+      - description: backends ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backends.Backend'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get backends based on given id
+      tags:
+      - Backends
+    put:
+      consumes:
+      - application/json
+      description: update backends
+      parameters:
+      - description: backends ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: backends info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/backends.Backend'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backends.Backend'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Update backends based on given id
+      tags:
+      - Backends
+  /credentials:
+    post:
+      consumes:
+      - application/json
+      description: Create credentials
+      parameters:
+      - description: credentials info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/credentials.Credentials'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Create new credentials
+      tags:
+      - Credentials
+  /credentials/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete credentials
+      parameters:
+      - description: credentials ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/credentials.Credentials'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Delete credentials based on given id
+      tags:
+      - Credentials
+    get:
+      consumes:
+      - application/json
+      description: get credentials
+      parameters:
+      - description: credentials ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/credentials.Credentials'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Get credentials based on given id
+      tags:
+      - Credentials
+    put:
+      consumes:
+      - application/json
+      description: update credentials
+      parameters:
+      - description: credential ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: credentials info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/credentials.Credentials'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/credentials.Credentials'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+      summary: Update credentials based on given id
+      tags:
+      - Credentials
   /sites:
     post:
       consumes:
@@ -37,10 +266,6 @@ paths:
             type: integer
         "404":
           description: Not Found
-          schema:
-            type: string
-        default:
-          description: error
           schema:
             type: string
       summary: Create new site
