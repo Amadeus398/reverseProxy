@@ -43,7 +43,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/backends.Backend"
+                            "$ref": "#/definitions/models.SwagBackends"
                         }
                     }
                 ],
@@ -126,7 +126,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/backends.Backend"
+                            "$ref": "#/definitions/models.SwagBackends"
                         }
                     }
                 ],
@@ -202,7 +202,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/credentials.Credentials"
+                            "$ref": "#/definitions/models.SwagCredentials"
                         }
                     }
                 ],
@@ -285,7 +285,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/credentials.Credentials"
+                            "$ref": "#/definitions/models.SwagCredentials"
                         }
                     }
                 ],
@@ -509,7 +509,7 @@ var doc = `{
                     "type": "string",
                     "example": "127.0.0.1:80"
                 },
-                "site_id": {
+                "site": {
                     "$ref": "#/definitions/sites.Site"
                 }
             }
@@ -527,6 +527,36 @@ var doc = `{
                 },
                 "site_id": {
                     "$ref": "#/definitions/sites.Site"
+                }
+            }
+        },
+        "models.SwagBackends": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "127.0.0.1:80"
+                },
+                "site": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "models.SwagCredentials": {
+            "type": "object",
+            "properties": {
+                "login": {
+                    "type": "string",
+                    "example": "someLogin"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "somePassword"
+                },
+                "site_id": {
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },

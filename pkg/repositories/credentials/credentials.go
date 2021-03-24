@@ -11,7 +11,7 @@ type Credentials struct {
 	Id       int64       `json:"id" example:"1" swaggerignore:"true"`
 	Login    string      `json:"login" example:"someLogin"`
 	Password string      `json:"password" example:"somePassword"`
-	Site     *sites.Site `json:"site_id"`
+	Site     *sites.Site `json:"site"`
 }
 
 const (

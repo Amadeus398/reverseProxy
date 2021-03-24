@@ -22,7 +22,7 @@ const resourceName = "credentials"
 // @Description Create credentials
 // @Accept json
 // @Produce json
-// @Param input body credentials.Credentials true "credentials info"
+// @Param input body models.SwagCredentials true "credentials info"
 // @Success 200 {integer} integer 1
 // @Failure 404 {string} string credentials.ErrCredentialsNotFound
 // @Router /credentials [post]
@@ -208,7 +208,7 @@ func Read(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path integer true "credential ID"
-// @Param input body credentials.Credentials true "credentials info"
+// @Param input body models.SwagCredentials true "credentials info"
 // @Success 200 {object} credentials.Credentials
 // @Failure 404 {string} string credentials.ErrCredentialsNotFound
 // @Router /credentials/{id} [put]

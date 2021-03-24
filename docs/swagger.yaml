@@ -5,7 +5,7 @@ definitions:
       address:
         example: 127.0.0.1:80
         type: string
-      site_id:
+      site:
         $ref: '#/definitions/sites.Site'
     type: object
   credentials.Credentials:
@@ -18,6 +18,27 @@ definitions:
         type: string
       site_id:
         $ref: '#/definitions/sites.Site'
+    type: object
+  models.SwagBackends:
+    properties:
+      address:
+        example: 127.0.0.1:80
+        type: string
+      site:
+        example: 1
+        type: integer
+    type: object
+  models.SwagCredentials:
+    properties:
+      login:
+        example: someLogin
+        type: string
+      password:
+        example: somePassword
+        type: string
+      site_id:
+        example: 1
+        type: integer
     type: object
   sites.Site:
     properties:
@@ -46,7 +67,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/backends.Backend'
+          $ref: '#/definitions/models.SwagBackends'
       produces:
       - application/json
       responses:
@@ -125,7 +146,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/backends.Backend'
+          $ref: '#/definitions/models.SwagBackends'
       produces:
       - application/json
       responses:
@@ -151,7 +172,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/credentials.Credentials'
+          $ref: '#/definitions/models.SwagCredentials'
       produces:
       - application/json
       responses:
@@ -230,7 +251,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/credentials.Credentials'
+          $ref: '#/definitions/models.SwagCredentials'
       produces:
       - application/json
       responses:

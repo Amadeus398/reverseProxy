@@ -21,7 +21,7 @@ const resourceName = "backends"
 // @Description Create backends
 // @Accept json
 // @Produce json
-// @Param input body backends.Backend true "backend info"
+// @Param input body models.SwagBackends true "backend info"
 // @Success 200 {integer} integer 1
 // @Failure 404 {string} string backends.ErrBackendsNotFound
 // @Router /backends [post]
@@ -208,7 +208,7 @@ func Read(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path integer true "backends ID"
-// @Param input body backends.Backend true "backends info"
+// @Param input body models.SwagBackends true "backends info"
 // @Success 200 {object} backends.Backend
 // @Failure 404 {string} string backends.ErrBackendsNotFound
 // @Router /backends/{id} [put]
