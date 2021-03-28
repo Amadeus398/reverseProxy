@@ -17,8 +17,8 @@ func (f fakeDbManager) Connect(cfg db.DbConfig) error {
 	return nil
 }
 
-func (f fakeDbManager) Close() {
-	return
+func (f fakeDbManager) Close() error {
+	return nil
 }
 
 func (f fakeDbManager) Exec(query string, args ...interface{}) error {
