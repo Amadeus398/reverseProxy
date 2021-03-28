@@ -47,7 +47,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.getLogs().GetError().Str("when", "verifying authorization requirement").
 			Err(err).Msg("failed verifying")
-		panic(err)
+		err.Error()
 	}
 
 	if needAuth {
@@ -58,7 +58,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if err := h.sendAuthorizationQuery(w); err != nil {
 				h.getLogs().GetError().Str("when", "send basic authorization query").
 					Err(err).Msg("unable to authorization query")
-				panic(err)
+				err.Error()
 			}
 			return
 		}
@@ -68,7 +68,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			h.getLogs().GetError().Str("when", "checking the user's data").
 				Err(err).Msg("failed check user's data")
-			panic(err)
+			err.Error()
 		}
 		if !authorized {
 			h.getLogs().GetWarn().Str("when", "entering user data").Msg("invalid user data")
@@ -76,7 +76,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if err := h.sendAuthorizationQuery(w); err != nil {
 				h.getLogs().GetError().Str("when", "re-attempt to enter user data").
 					Err(err).Msg("unable to authorization query")
-				panic(err)
+				err.Error()
 			}
 			return
 		}
@@ -93,7 +93,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				h.getLogs().GetError().Str("when", "get client").
 					Str("when", "no hosts").Str("when", "send response").
 					Err(err).Msg("unable to send response")
-				panic(err)
+				err.Error()
 			}
 			return
 		case backendManager.ErrClientNotFound:
@@ -103,7 +103,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				h.getLogs().GetError().Str("when", "get client").
 					Str("when", "no clients").Str("when", "send response").
 					Err(err).Msg("unable to send response")
-				panic(err)
+				err.Error()
 			}
 			return
 		default:
@@ -112,7 +112,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if _, err := fmt.Fprint(w, monkeys); err != nil {
 				h.getLogs().GetError().Str("when", "get client").
 					Str("when", "send response").Err(err).Msg("unable to send response")
-				panic(err)
+				err.Error()
 			}
 			return
 		}
@@ -126,7 +126,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.log.GetError().Str("when", "parse raw url into url structure").
 			Err(err).Msg("unable to parse raw url")
-		panic(err)
+		err.Error()
 	}
 	req.Header.Del("Authorization")
 
@@ -152,13 +152,13 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.getLogs().GetError().Str("when", "read response body").
 			Err(err).Msg("unable to read body")
-		panic(err)
+		err.Error()
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			h.getLogs().GetError().Str("when", "close body").
 				Err(err).Msg("unable to close body")
-			panic(err)
+			err.Error()
 		}
 	}()
 
@@ -182,7 +182,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if _, err := w.Write(body); err != nil {
 		h.getLogs().GetError().Str("when", "write response body").
 			Err(err).Msg("unable to write body")
-		panic(err)
+		err.Error()
 	}
 	h.getLogs().GetInfo().Msg("response complete")
 }

@@ -525,7 +525,7 @@ var doc = `{
                     "type": "string",
                     "example": "somePassword"
                 },
-                "site_id": {
+                "site": {
                     "$ref": "#/definitions/sites.Site"
                 }
             }
@@ -537,7 +537,7 @@ var doc = `{
                     "type": "string",
                     "example": "127.0.0.1:80"
                 },
-                "site": {
+                "site_id": {
                     "type": "integer",
                     "example": 1
                 }
