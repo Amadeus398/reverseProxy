@@ -11,7 +11,7 @@ import (
 	"reverseProxy/pkg/logging"
 )
 
-const monkeys = "40000 тысяч обезьян в жопу сунули банан"
+const message = "If you see this page, an error has occurred"
 
 type RevHandler struct {
 	log *logging.Logger
@@ -109,7 +109,7 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		default:
 			w.Header().Set("Content-Type", "text/plain; text/json; charset=utf-8")
 			w.WriteHeader(http.StatusInternalServerError)
-			if _, err := fmt.Fprint(w, monkeys); err != nil {
+			if _, err := fmt.Fprint(w, message); err != nil {
 				h.getLogs().GetError().Str("when", "get client").
 					Str("when", "send response").Err(err).Msg("unable to send response")
 				err.Error()
@@ -134,10 +134,10 @@ func (h RevHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp, err := client.Cl.Do(req)
 	if err != nil {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		bytesMonkeys := []byte(monkeys)
-		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(bytesMonkeys)))
+		bytesMessage := []byte(message)
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(bytesMessage)))
 		w.WriteHeader(http.StatusInternalServerError)
-		if _, err := w.Write(bytesMonkeys); err != nil {
+		if _, err := w.Write(bytesMessage); err != nil {
 			h.getLogs().GetError().Str("when", "completed request, start response").
 				Str("when", "send response").Err(err).Msg("unable to send response")
 			return
